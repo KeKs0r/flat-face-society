@@ -6,20 +6,26 @@ import {
   PlasmicRootProvider,
 } from "@plasmicapp/loader-react";
 import Error from "next/error";
-import { PLASMIC } from "../init";
+import { PLASMIC, PLASMIC_PREVIEW } from "../init";
 import { substitute } from "../app/init-substitutes";
 
-substitute(PLASMIC);
+const isDev = process.env.NODE_ENV === "development";
+
+substitute(isDev ? PLASMIC_PREVIEW : PLASMIC);
 
 export default function PlasmicLoaderPage(props: {
   plasmicData?: ComponentRenderData;
+  shouldPreview: boolean;
 }) {
-  const { plasmicData } = props;
+  const { plasmicData, shouldPreview } = props;
   if (!plasmicData || plasmicData.entryCompMetas.length === 0) {
     return <Error statusCode={404} />;
   }
   return (
-    <PlasmicRootProvider loader={PLASMIC} prefetchedData={plasmicData}>
+    <PlasmicRootProvider
+      loader={shouldPreview ? PLASMIC_PREVIEW : PLASMIC}
+      prefetchedData={shouldPreview ? undefined : plasmicData}
+    >
       <PlasmicComponent component={plasmicData.entryCompMetas[0].name} />
     </PlasmicRootProvider>
   );
@@ -27,6 +33,7 @@ export default function PlasmicLoaderPage(props: {
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const { plasmicLoaderPage } = context.params ?? {};
+  const shouldPreview = isDev;
   const plasmicPath =
     typeof plasmicLoaderPage === "string"
       ? plasmicLoaderPage
@@ -36,7 +43,7 @@ export const getStaticProps: GetStaticProps = async (context) => {
   const plasmicData = await PLASMIC.maybeFetchComponentData(plasmicPath);
   if (plasmicData) {
     return {
-      props: { plasmicData },
+      props: { plasmicData, shouldPreview },
     };
   }
   return {

@@ -21,7 +21,7 @@ export function EmailSubscribe() {
           // Control the input element value with React state
           props: {
             value: email,
-            onChange: (e) => {
+            onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
               console.log("onChange", e.target.value);
               setEmail(e.target.value);
             },
